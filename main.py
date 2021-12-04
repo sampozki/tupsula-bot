@@ -76,16 +76,19 @@ def sauna(update, context):
     
     r = requests.get(DATA_URL)
     
-    # If empty result
-    if(r.text != ""):
-        update.message.reply_text('Saunan lämpötila on {}°C'.format(r.text))
+    # If empty result, use sauna_bak -thingspeak backup
+    if(r.text == ""):
+        sauna_bak(update, context)
         return
-    sauna_bak(update, context)
+    
+    # Send result
+    update.message.reply_text('Saunan lämpötila on {}°C'.format(r.text))
 
 # Handler for /saunabak command
 def sauna_bak(update, context):
     logger.info("/saunabak: " + str(update.message.chat))
 
+    # Fetch temp .csv
     r = requests.get(DATA_URL_BAK)
     lines = r.text.splitlines()
     
@@ -95,6 +98,8 @@ def sauna_bak(update, context):
         if(temp != "" and temp != "field1"):
             update.message.reply_text('Saunan lämpötila on {}°C'.format(lines[len(lines) - i].split(",")[2]))
             return
+        
+    # If no data is present, send default error message
     update.message.reply_text('Lämpötila is bork, temperature.txt ja thingspeak molemmat palauttaa kokonaan tyhjää!')
 
 def error(update, context):
@@ -105,12 +110,14 @@ def echo(update, context):
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
-
+    
+    # Set nakkikämppä info to be sent at ~12:00 on Mon
     job_queue = updater.job_queue
     job_queue.run_daily(nakkikamppa_info, days=[0], time=datetime.time(hour=10, minute=00, second=00))
 
     dp = updater.dispatcher
-
+    
+    # Command handlers
     dp.add_handler(CommandHandler("sauna", sauna))
     dp.add_handler(CommandHandler("saunabak", sauna_bak))
     dp.add_handler(MessageHandler(Filters.text, echo))
