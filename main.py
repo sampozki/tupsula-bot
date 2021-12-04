@@ -106,7 +106,7 @@ def error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
     
 def echo(update, context):
-    logger.info("User sent message: " + update.message.text)
+    logger.info("Message: " + update.message.text)
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
@@ -120,7 +120,7 @@ def main():
     # Command handlers
     dp.add_handler(CommandHandler("sauna", sauna))
     dp.add_handler(CommandHandler("saunabak", sauna_bak))
-    dp.add_handler(MessageHandler(Filters.text, echo))
+    #dp.add_handler(MessageHandler(Filters.text, echo))
 
     dp.add_error_handler(error)
     updater.start_polling()
