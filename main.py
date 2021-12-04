@@ -43,7 +43,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-# Returns weeks since specified date
+# Returns weeks since specified date + default offset
 def weeks_since_start(date1):
     NAKKIKAMPPAE_OFFSET = 4 # Offset to account for current nakkikämppä turn
     STARTDATE = date(2021, 1, 4) # First monday of 2021
