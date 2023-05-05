@@ -108,7 +108,7 @@ def error(update, context):
 def echo(update, context):
     logger.info("Message: " + update.message.text)
 
-def unPin(update, context):
+def unpin(update, context):
     print(update.message.sender_chat)
     if(update.message.sender_chat != None and update.message.sender_chat.type=="channel"):
         context.bot.unpin_chat_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
@@ -127,7 +127,7 @@ def main():
     # Command handlers
     dp.add_handler(CommandHandler("sauna", sauna))
     dp.add_handler(CommandHandler("saunabak", sauna_bak))
-    dp.add_handler(MessageHandler(Filters.text, unPin))
+    dp.add_handler(MessageHandler(Filters.text, unpin))
 
     dp.add_error_handler(error)
     updater.start_polling()
