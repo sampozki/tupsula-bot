@@ -1,3 +1,2 @@
-###### Requirements without Version Specifiers ######
-python-telegram-bot
+python-telegram-bot==13.8.1
 requests
