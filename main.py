@@ -18,7 +18,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 #GROUP_ID = 
 
 # Derpiina
-#BOT_TOKEN =
+#BOT_TOKEN = 
 
 # Vahtikoira
 #BOT_TOKEN = 
