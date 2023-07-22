@@ -12,16 +12,16 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 # GROUP ID:s for nakkikämppäping
 # Tupsula chat
-#GROUP_ID = -1001238915402
+#GROUP_ID = 
 
 # Otto
-GROUP_ID = 388229597
+#GROUP_ID = 
 
 # Derpiina
-#BOT_TOKEN = "2117266032:AAGgyGuybRIHT54aCzp40vZcEL2Cq6RjR7Y"
+#BOT_TOKEN =
 
 # Vahtikoira
-BOT_TOKEN = "812995894:AAFqd-SNqPjTH5tEgr_C3yZ8zbO_o-xwnlk"
+#BOT_TOKEN = 
 
 # URL:s for getting temperature data
 DATA_URL_BAK = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
