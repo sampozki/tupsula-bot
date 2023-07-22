@@ -11,12 +11,17 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 #--------------- CONFIG BELOW ---------------
 
 # GROUP ID:s for nakkikämppäping
-#GROUP_ID = None # PROD
-GROUP_ID = None # DEV
+# Tupsula chat
+#GROUP_ID = -1001238915402
 
-# BOT TOKENS
-#BOT_TOKEN = None # PROD
-BOT_TOKEN = None # DEV
+# Otto
+GROUP_ID = 388229597
+
+# Derpiina
+#BOT_TOKEN = "2117266032:AAGgyGuybRIHT54aCzp40vZcEL2Cq6RjR7Y"
+
+# Vahtikoira
+BOT_TOKEN = "812995894:AAFqd-SNqPjTH5tEgr_C3yZ8zbO_o-xwnlk"
 
 # URL:s for getting temperature data
 DATA_URL_BAK = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
@@ -72,32 +77,28 @@ def nakkikamppa_info(context):
 
 # Handler for /sauna command
 def sauna(update, context):
-    logger.info("/sauna: " + str(update.message.chat))
-    
-    r = requests.get(DATA_URL)
-    
-    # If empty result, use sauna_bak -thingspeak backup
-    if(r.text == ""):
-        sauna_bak(update, context)
-        return
-    
-    # Send result
-    update.message.reply_text('Saunan lämpötila on {}°C'.format(r.text))
-
-# Handler for /saunabak command
-def sauna_bak(update, context):
     logger.info("/saunabak: " + str(update.message.chat))
 
     # Fetch temp .csv
     r = requests.get(DATA_URL_BAK)
-    lines = r.text.splitlines()
-    
-    # Find first non-empty data from thingspeak
-    for i in range(1, len(lines)):
-        temp = lines[len(lines) - i].split(",")[2]
-        if(temp != "" and temp != "field1"):
-            update.message.reply_text('Saunan lämpötila on {}°C'.format(lines[len(lines) - i].split(",")[2]))
-            return
+
+    # Get temps from returned csv data
+    temps = [l.split(",")[2] for l in r.text.splitlines()][1:]
+
+    # Calculate temp delta from ten datapoints back
+    delta_temp = float(temps[-1]) - float(temps[-6])
+
+    # Increase or decrease of one degree
+    text = "tasainen"
+    if (delta_temp > 1):
+        text = "nouseva"
+    elif (delta_temp < -1):
+        text = "laskeva"
+
+    lasttemp = temps[-1]
+    if(lasttemp != "" and lasttemp != "field1"):
+        update.message.reply_text('Saunan lämpötila on {}°C {}'.format(lasttemp, text))
+        return
         
     # If no data is present, send default error message
     update.message.reply_text('Lämpötila is bork, temperature.txt ja thingspeak molemmat palauttaa kokonaan tyhjää!')
@@ -109,13 +110,12 @@ def echo(update, context):
     logger.info("Message: " + update.message.text)
 
 def unpin(update, context):
-    print(update.message.sender_chat)
+    logger.info(update.message.sender_chat)
     if(update.message.sender_chat != None and update.message.sender_chat.type=="channel"):
         context.bot.unpin_chat_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
 
 
 def main():
-    #updater = Updater(BOT_TOKEN)
     updater = Updater(BOT_TOKEN, use_context=True)
     
     # Set nakkikämppä info to be sent at ~12:00 on Mon
@@ -126,7 +126,6 @@ def main():
     
     # Command handlers
     dp.add_handler(CommandHandler("sauna", sauna))
-    dp.add_handler(CommandHandler("saunabak", sauna_bak))
     dp.add_handler(MessageHandler(Filters.text, unpin))
 
     dp.add_error_handler(error)
