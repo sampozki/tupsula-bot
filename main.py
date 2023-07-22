@@ -96,13 +96,8 @@ def sauna(update, context):
         text = "laskeva"
 
     lasttemp = temps[-1]
-    if(lasttemp != "" and lasttemp != "field1"):
-        update.message.reply_text('Saunan lämpötila on {}°C {}'.format(lasttemp, text))
-        return
-        
-    # If no data is present, send default error message
-    update.message.reply_text('Lämpötila is bork, temperature.txt ja thingspeak molemmat palauttaa kokonaan tyhjää!')
-
+    update.message.reply_text('Saunan lämpötila on {}°C {}'.format(lasttemp, text))
+     
 def error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
     
