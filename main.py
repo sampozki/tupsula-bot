@@ -2,30 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import configparser
 import requests
 import datetime
 from datetime import timedelta, date
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-#--------------- CONFIG BELOW ---------------
+ 
 
-# GROUP ID:s for nakkikämppäping
-# Tupsula chat
-#GROUP_ID = 
+config = configparser.ConfigParser()
 
-# Otto
-#GROUP_ID = 
+config.read('config.ini')
 
-# Derpiina
-#BOT_TOKEN = 
-
-# Vahtikoira
-#BOT_TOKEN = 
+GROUP_ID = config.get("Settings", "GROUP_ID")
+BOT_TOKEN = config.get("Settings", "BOT_TOKEN")
 
 # URL:s for getting temperature data
 DATA_URL_BAK = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
-DATA_URL = "https://tupsula.fi/sauna/temperature.txt"
 
 NAKKIKAMPPAE_STRING = """<b>{} Nakkikämppävuoro</b>
 
