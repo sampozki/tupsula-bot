@@ -1,5 +1,5 @@
 # tupsula-bot
-Simple chatbot that you can ask temperature of Tupsula's A sauna, also announces nakkikämppä turns to configurable channel.
+Simple chatbot that you can ask temperature of Tupsula's A sauna, also announces nakkikämppä turns to configurable channel. Use the config file for configuration.
 
 # requirements
 ```shell
