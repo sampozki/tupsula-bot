@@ -9,14 +9,6 @@ from datetime import timedelta, date
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
- 
-
-config = configparser.ConfigParser()
-
-config.read('config.ini')
-
-GROUP_ID = config.get("Settings", "GROUP_ID")
-BOT_TOKEN = config.get("Settings", "BOT_TOKEN")
 
 # URL:s for getting temperature data
 DATA_URL_BAK = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
@@ -34,13 +26,21 @@ Ohje:
 
 #--------------- CODE BELOW ---------------
 
-if(GROUP_ID == None or BOT_TOKEN == None):
-    print("You must assign GROUP_ID and BOT_TOKEN in main.py source file.")
-
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) 
+
+config = configparser.ConfigParser()
+
+try:
+    config.read('config.ini')
+
+    GROUP_ID = config.get("Settings", "GROUP_ID")
+    BOT_TOKEN = config.get("Settings", "BOT_TOKEN")
+except:
+    logger.error("You must assign GROUP_ID and BOT_TOKEN in config.ini source file.")
+    exit()
 
 # Returns weeks since specified date + default offset
 def weeks_since_start(date1):
@@ -86,7 +86,7 @@ def sauna(update, context):
     text = "tasainen"
     if (delta_temp > 1):
         text = "nouseva"
-    elif (delta_temp < -1):
+    elif (delta_temp < -0.5):
         text = "laskeva"
 
     lasttemp = temps[-1]
