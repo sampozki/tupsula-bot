@@ -11,7 +11,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 
 # URL:s for getting temperature data
-DATA_URL_BAK = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
+DATA_URL = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
 
 NAKKIKAMPPAE_STRING = """<b>{} Nakkikämppävuoro</b>
 
@@ -24,6 +24,8 @@ Ohje:
 - Pahvit/Lasit/Metallit keräyksiin
 - Tölkit kauppaan"""
 
+SAUNAWARM_STRING = "Saunassa ompi yli 70C"
+
 #--------------- CODE BELOW ---------------
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -32,6 +34,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__) 
 
 config = configparser.ConfigParser()
+
+sauna_warm_sent = False
 
 try:
     config.read('config.ini')
@@ -69,15 +73,41 @@ def nakkikamppa_info(context):
     logger.info("Nakkikamppainfo lähetetty")
     context.bot.send_message(chat_id=GROUP_ID, text=NAKKIKAMPPAE_STRING.format(nakkikamppae()), parse_mode=telegram.ParseMode.HTML)
 
-# Handler for /sauna command
-def sauna(update, context):
-    logger.info("/saunabak: " + str(update.message.chat))
-
+def get_sauna_temps():
     # Fetch temp .csv
-    r = requests.get(DATA_URL_BAK)
+    r = requests.get(DATA_URL)
 
     # Get temps from returned csv data
-    temps = [l.split(",")[2] for l in r.text.splitlines()][1:]
+    return [l.split(",")[2] for l in r.text.splitlines()][1:]
+
+def sauna_warm_poller(context):
+    # Try to get sauna temps
+    try:
+        temps = get_sauna_temps()
+        temps[0] # Test if we have valid temperatures, fail if not
+    except:
+        logger.error("Lämpötilaa ei saa haettua!")
+        return
+    
+    last_temp = float(temps[-1])
+
+    # Send info about sauna if it's not been sent yet
+    if(last_temp > 70 and not context.job.context):
+        context.job.context = True
+        context.bot.send_message(chat_id=GROUP_ID, text=SAUNAWARM_STRING, parse_mode=telegram.ParseMode.HTML)
+    elif(last_temp < 65):
+        context.job.context = False
+
+# Handler for /sauna command
+def sauna(update, context):
+    logger.info("/sauna: " + str(update.message.chat))
+
+    try:
+        temps = get_sauna_temps()
+        temps[0] # Test if we have valid temperatures, fail if not
+    except:
+        update.message.reply_text('Lämpötilaa ei saatu haettua!')
+        return
 
     # Calculate temp delta from ten datapoints back
     delta_temp = float(temps[-1]) - float(temps[-6])
@@ -110,6 +140,7 @@ def main():
     # Set nakkikämppä info to be sent at ~12:00 on Mon
     job_queue = updater.job_queue
     job_queue.run_daily(nakkikamppa_info, days=[0], time=datetime.time(hour=10, minute=00, second=00))
+    job_queue.run_repeating(sauna_warm_poller, 60, context=sauna_warm_sent)
 
     dp = updater.dispatcher
     
