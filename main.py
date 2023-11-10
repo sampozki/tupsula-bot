@@ -77,8 +77,8 @@ def get_sauna_temps():
     # Fetch temp .csv
     r = requests.get(DATA_URL)
 
-    # Get temps from returned csv data
-    return [l.split(",")[2] for l in r.text.splitlines()][1:]
+    # Get temps from returned csv data, remove empty temp strings
+    return [i for i in [l.split(",")[2] for l in r.text.splitlines()][1:] if i]
 
 def sauna_warm_poller(context):
     # Try to get sauna temps
@@ -104,14 +104,17 @@ def sauna(update, context):
 
     try:
         temps = get_sauna_temps()
-        temps[0] # Test if we have valid temperatures, fail if not
     except:
         update.message.reply_text('Lämpötilaa ei saatu haettua!')
         return
 
-    # Calculate temp delta from ten datapoints back
-    delta_temp = float(temps[-1]) - float(temps[-6])
-
+    try:
+        # Calculate temp delta from ten datapoints back
+        delta_temp = float(temps[-1]) - float(temps[-6])
+    except:
+        update.message.reply_text('Datassa ongelma')
+        return
+    
     # Increase or decrease of one degree
     text = "tasainen"
     if (delta_temp > 1):
