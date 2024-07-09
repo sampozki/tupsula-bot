@@ -7,6 +7,19 @@ pip3 install python-telegram-bot==13.8.1
 pip3 install requests
 ```
 
+# Building container with Docker
+
+Run following command:
+```
+docker build --tag derpiina:latest --file Dockerfile .
+```
+
+# Run with docker-compose :)
+
+```
+docker-compose up -d
+```
+
 # note
 - By default, Group Privacy is enabled for bots. This setting has to be changed used the @BotFather bot >> Bot Settings >> Group Privacy >> Turn off
 - Old version of python-telegram-bot
