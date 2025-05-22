@@ -8,6 +8,7 @@ import datetime
 from datetime import timedelta, date
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import os
 
 
 # URL:s for getting temperature data
@@ -38,10 +39,9 @@ config = configparser.ConfigParser()
 sauna_warm_sent = False
 
 try:
-    config.read('config.ini')
-
-    GROUP_ID = config.get("Settings", "GROUP_ID")
-    BOT_TOKEN = config.get("Settings", "BOT_TOKEN")
+    # Read env
+    GROUP_ID = os.getenv("GROUP_ID")
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
 except:
     logger.error("You must assign GROUP_ID and BOT_TOKEN in config.ini source file.")
     exit()
