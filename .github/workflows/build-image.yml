@@ -12,9 +12,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
+    - name: Vars
+      id: vars
+      run: |
+        echo "SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
+  
     - name: Build image
       run: |
-        docker build . --file Dockerfile --tag ghcr.io/sampozki/derpiina:latest
+        docker build . --file Dockerfile \
+          --tag ghcr.io/sampozki/derpiina:latest \
+          --tag ghcr.io/sampozki/derpiina:${SHORT_SHA}
         docker images
 
     - name: Log in to GitHub Container Registry
@@ -23,5 +31,8 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.TOKEN }}
+
     - name: Push the image to ghcr
-      run: docker push ghcr.io/sampozki/derpiina:latest
+      run: |
+        docker push ghcr.io/sampozki/derpiina:latest
+        docker push ghcr.io/sampozki/derpiina:${SHORT_SHA}
