@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: derpiina
+  namespace: derpiina
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: derpiina
+  template:
+    metadata:
+      labels:
+        app: derpiina
+    spec:
+      containers:
+        - name: derpiina
+          image: ghcr.io/sampozki/derpiina:latest
+          imagePullPolicy: Always
+          env:
+            - name: GROUP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: GROUP_ID
+            - name: BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bot-secrets
+                  key: BOT_TOKEN
+      imagePullSecrets:
+        - name: ghcr-creds
