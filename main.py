@@ -9,9 +9,9 @@ import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
 import csv
+import random
 
 
-# URL:s for getting temperature data
 DATA_URL = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
 
 NAKKIKAMPPAE_STRING = """<b>{} Nakkikämppävuoro</b>
@@ -25,7 +25,18 @@ Ohje:
 - Pahvit/Lasit/Metallit keräyksiin
 - Tölkit kauppaan"""
 
-SAUNAWARM_STRING = "Saunassa ompi yli 70C"
+SURKULIST = ["😟", "😟😟😟", "😔", "😔😔", "😢😢", "😭", ":(", ":(((", ":sadge:"]
+
+SAUNAWARMLIST = ["Saunassa ompi yli 70°C",
+                 "Saunassa ompi yli 70°C",
+                 "Saunassa ompi yli 70°C",
+                 "Saunassa yli 70°C, meikä poika: nonniih",
+                 "Yli 70°C lämmintä, kaikki teletapit saunaan",
+                 "Yli 70°C, hiki tulee jo pelkästä ajatuksesta",
+                 "🔥 70°C ja mä oon ihan 🐒🧠 rn",
+                 "Skipidi sauna, yli 70°C skkrt",
+                 "Saunassa nyt +70°C, huutokauppakeisari sanois: KAU-HOTTA!",
+                 "It's sauna o clock +70°C"]
 
 #--------------- CODE BELOW ---------------
 
@@ -46,6 +57,7 @@ except:
     logger.error("You must assign GROUP_ID and BOT_TOKEN in config.ini source file.")
     exit()
 
+
 # ----- nakkikämppähirvitys -----
 
 # Returns weeks since specified date + default offset
@@ -60,6 +72,7 @@ def weeks_since_start(date1):
     # Return number of weeks
     return ((monday2 - monday1).days / 7) + NAKKIKAMPPAE_OFFSET
 
+
 # Return current nakkikämppä as string
 def nakkikamppae():
     kamppa_number = int((weeks_since_start(datetime.date.today()) % 21) + 1)
@@ -70,10 +83,12 @@ def nakkikamppae():
     else:
         return "B" + str(kamppa_number)
 
+
 # Cron function that sends the nakkikämppämessage
 def nakkikamppa_info(context):
     logger.info("Nakkikamppainfo lähetetty")
     context.bot.send_message(chat_id=GROUP_ID, text=NAKKIKAMPPAE_STRING.format(nakkikamppae()), parse_mode=telegram.ParseMode.HTML)
+
 
 # ----- saunapaska -----
 
@@ -83,12 +98,8 @@ def _safe_float(s):
     except:
         return None
 
+
 def get_sauna_temps():
-    """
-    Returns:
-      (latest_temp: float, current_trend: str, is_stale: bool)
-    or None if no valid data.
-    """
     try:
         r = requests.get(DATA_URL, timeout=10)
         r.raise_for_status()
@@ -145,9 +156,8 @@ def sauna_warm_poller(context):
         logger.error(f"Lämpötilaa ei saa haettua! ({e})")
         return
 
-    # Älä ilmoita jos data on vanhaa
     if is_stale:
-        logger.info("Data on yli 60 min vanha. Ilmoitusta ei lähetetä .")
+        logger.info("Data on yli 60 min vanha. Ilmoitusta ei lähetetä.")
         return
 
     already_sent = bool(getattr(context.job, "context", False))
@@ -156,7 +166,7 @@ def sauna_warm_poller(context):
         context.job.context = True
         context.bot.send_message(
             chat_id=GROUP_ID,
-            text=SAUNAWARM_STRING,
+            text=str(random.choice(SAUNAWARMLIST)),
             parse_mode=telegram.ParseMode.HTML
         )
     elif latest_temp < 65 and already_sent:
@@ -175,9 +185,10 @@ def sauna(update, context):
 
     reply = f"Saunan lämpötila on {latest_temp:.1f}°C {trend}"
     if is_stale:
-        reply += ". Viimeisin lämpötiladata yli tunnin vanha😟😟😟"
+        reply += ". Viimeisin lämpödata yli tunnin vanha "+str(random.choice(SURKULIST))
 
     update.message.reply_text(reply)
+
 
 # ----- random paska -----
 
@@ -192,6 +203,8 @@ def unpin(update, context):
     if(update.message.sender_chat != None and update.message.sender_chat.type=="channel"):
         context.bot.unpin_chat_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
 
+
+# ----- maini -----
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
