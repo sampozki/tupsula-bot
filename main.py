@@ -5,10 +5,10 @@ import logging
 import configparser
 import requests
 import datetime
-from datetime import timedelta, date
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
+import csv
 
 
 # URL:s for getting temperature data
@@ -46,21 +46,23 @@ except:
     logger.error("You must assign GROUP_ID and BOT_TOKEN in config.ini source file.")
     exit()
 
+# ----- nakkikämppähirvitys -----
+
 # Returns weeks since specified date + default offset
 def weeks_since_start(date1):
     NAKKIKAMPPAE_OFFSET = 4 # Offset to account for current nakkikämppä turn
-    STARTDATE = date(2021, 1, 4) # First monday of 2021
+    STARTDATE = datetime.date(2021, 1, 4) # First monday of 2021
 
     # Mondays of weeks
-    monday1 = (STARTDATE - timedelta(days=STARTDATE.weekday()))
-    monday2 = (date1 - timedelta(days=date1.weekday()))
+    monday1 = (STARTDATE - datetime.timedelta(days=STARTDATE.weekday()))
+    monday2 = (date1 - datetime.timedelta(days=date1.weekday()))
     
     # Return number of weeks
     return ((monday2 - monday1).days / 7) + NAKKIKAMPPAE_OFFSET
 
 # Return current nakkikämppä as string
 def nakkikamppae():
-    kamppa_number = int((weeks_since_start(date.today()) % 21) + 1)
+    kamppa_number = int((weeks_since_start(datetime.date.today()) % 21) + 1)
     
     # Concat letter
     if(kamppa_number <= 9):
@@ -73,58 +75,112 @@ def nakkikamppa_info(context):
     logger.info("Nakkikamppainfo lähetetty")
     context.bot.send_message(chat_id=GROUP_ID, text=NAKKIKAMPPAE_STRING.format(nakkikamppae()), parse_mode=telegram.ParseMode.HTML)
 
-def get_sauna_temps():
-    # Fetch temp .csv
-    r = requests.get(DATA_URL)
+# ----- saunapaska -----
 
-    # Get temps from returned csv data, remove empty temp strings
-    return [i for i in [l.split(",")[2] for l in r.text.splitlines()][1:] if i]
+def _safe_float(s):
+    try:
+        return float(s)
+    except:
+        return None
+
+def get_sauna_temps():
+    """
+    Returns:
+      (latest_temp: float, current_trend: str, is_stale: bool)
+    or None if no valid data.
+    """
+    try:
+        r = requests.get(DATA_URL, timeout=10)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"Virhe datan haussa: {e}")
+        return None
+
+    reader = csv.reader(r.text.splitlines())
+    header = next(reader, None)  # skip header if present
+
+    rows = [row for row in reader if len(row) >= 3 and row[2].strip()]
+    if not rows:
+        return None
+
+    # latest row
+    ts_raw, _, temp_raw = rows[-1]
+    try:
+        latest_ts = datetime.datetime.strptime(ts_raw.strip(), "%Y-%m-%d %H:%M:%S UTC")
+        latest_ts = latest_ts.replace(tzinfo=datetime.timezone.utc)
+        latest_temp = float(temp_raw.strip())
+    except Exception as e:
+        print(f"Virhe rivin jäsentämisessä: {e}")
+        return None
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    is_stale = (now - latest_ts) > datetime.timedelta(minutes=60)
+
+    temps_f = [_safe_float(r[2].strip()) for r in rows if len(r) >= 3 and r[2].strip()]
+    temps_f = [t for t in temps_f if t is not None]
+    trend = "tasainen"
+    if len(temps_f) >= 6:
+        delta = temps_f[-1] - temps_f[-6]
+    elif len(temps_f) >= 2:
+        delta = temps_f[-1] - temps_f[-2]
+    else:
+        delta = 0.0
+
+    if delta > 1.0:
+        trend = "nouseva"
+    elif delta < -0.5:
+        trend = "laskeva"
+
+    return latest_temp, trend, is_stale
+
 
 def sauna_warm_poller(context):
-    # Try to get sauna temps
     try:
-        temps = get_sauna_temps()
-        temps[0] # Test if we have valid temperatures, fail if not
-    except:
-        logger.error("Lämpötilaa ei saa haettua!")
+        result = get_sauna_temps()
+        if result is None:
+            logger.error("Lämpötilaa ei saa haettua!")
+            return
+        latest_temp, trend, is_stale = result
+    except Exception as e:
+        logger.error(f"Lämpötilaa ei saa haettua! ({e})")
         return
-    
-    last_temp = float(temps[-1])
 
-    # Send info about sauna if it's not been sent yet
-    if(last_temp > 70 and not context.job.context):
+    # Älä ilmoita jos data on vanhaa
+    if is_stale:
+        logger.info("Data on yli 60 min vanha. Ilmoitusta ei lähetetä .")
+        return
+
+    already_sent = bool(getattr(context.job, "context", False))
+
+    if latest_temp > 70 and not already_sent:
         context.job.context = True
-        context.bot.send_message(chat_id=GROUP_ID, text=SAUNAWARM_STRING, parse_mode=telegram.ParseMode.HTML)
-    elif(last_temp < 65):
+        context.bot.send_message(
+            chat_id=GROUP_ID,
+            text=SAUNAWARM_STRING,
+            parse_mode=telegram.ParseMode.HTML
+        )
+    elif latest_temp < 65 and already_sent:
         context.job.context = False
 
-# Handler for /sauna command
+
 def sauna(update, context):
     logger.info("/sauna: " + str(update.message.chat))
 
-    try:
-        temps = get_sauna_temps()
-    except:
-        update.message.reply_text('Lämpötilaa ei saatu haettua!')
+    result = get_sauna_temps()
+    if result is None:
+        update.message.reply_text("Lämpötilaa ei saatu haettua!")
         return
 
-    try:
-        # Calculate temp delta from ten datapoints back
-        delta_temp = float(temps[-1]) - float(temps[-6])
-    except:
-        update.message.reply_text('Datassa ongelma')
-        return
-    
-    # Increase or decrease of one degree
-    text = "tasainen"
-    if (delta_temp > 1):
-        text = "nouseva"
-    elif (delta_temp < -0.5):
-        text = "laskeva"
+    latest_temp, trend, is_stale = result
 
-    lasttemp = temps[-1]
-    update.message.reply_text('Saunan lämpötila on {}°C {}'.format(lasttemp, text))
-     
+    reply = f"Saunan lämpötila on {latest_temp:.1f}°C {trend}"
+    if is_stale:
+        reply += ". Viimeisin lämpötiladata yli tunnin vanha😟😟😟"
+
+    update.message.reply_text(reply)
+
+# ----- random paska -----
+
 def error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
     
@@ -143,7 +199,7 @@ def main():
     # Set nakkikämppä info to be sent at ~12:00 on Mon
     job_queue = updater.job_queue
     job_queue.run_daily(nakkikamppa_info, days=[0], time=datetime.time(hour=10, minute=00, second=00))
-    job_queue.run_repeating(sauna_warm_poller, 60, context=sauna_warm_sent)
+    job_queue.run_repeating(sauna_warm_poller, 60, first=0, context=False)
 
     dp = updater.dispatcher
     
