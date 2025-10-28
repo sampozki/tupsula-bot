@@ -30,13 +30,35 @@ SURKULIST = ["😟", "😟😟😟", "😔", "😔😔", "😢😢", "😭", ":(
 SAUNAWARMLIST = ["Saunassa ompi yli 70°C",
                  "Saunassa ompi yli 70°C",
                  "Saunassa ompi yli 70°C",
+                 "Saunassa on yli 70°C",
+                 "Saunassa on yli 70°C",
                  "Saunassa yli 70°C, meikä poika: nonniih",
                  "Yli 70°C lämmintä, kaikki teletapit saunaan",
                  "Yli 70°C, hiki tulee jo pelkästä ajatuksesta",
                  "🔥 70°C ja mä oon ihan 🐒🧠 rn",
                  "Skipidi sauna, yli 70°C skkrt",
                  "Saunassa nyt +70°C, huutokauppakeisari sanois: KAU-HOTTA!",
-                 "It's sauna o clock +70°C"]
+                 "It's sauna o clock +70°C",
+                 "Yli 70°C ja löyly lyö kuin nyrkki Naantalista 💥",
+                 "Sauna +70°C, sisäinen lämpötila: tyytyväinen",
+                 "+70°C on scifiä, eikä fantasiaa -> sauna on kuuma",
+                 "+70°C, sauna on rajumpi kuin tuli ja salama",
+                 "Saunassa on yli +70°C, peskää likanne",
+                 "+70°C kantsii saunoo nopee",
+                 "Eiks +70°C oo ihan fresh",
+                 "Kuinka monta koneteekkaria tarvitaan lämmittämään sauna? Ei yhtään, se on jo lämmin",
+                 "Juuri nyt jysähti! Saunassa yli +70°C - katso kuvat"]
+
+COLDMESSAGES = ["Ihan vitun kylmä, ei tuolla voi mitään tehdä",
+                "Kylmää kuin huopatossutehtaalla",
+                "Alle enpäs vittu edes tiedä",
+                "Kantsis varmaan laittaa sauna lämpeemään ja kysyä sitten uudestaan, saatana"]
+
+SUPERRARELIST = ['Joskus voisin vastata läpällä vain "en tiedä"',
+                 "En tiedä, tiedätkö sinä?",
+                 "Lämpömittari on perätilassa. Yritä myöhemmin uudestaan jos uskallat",
+                 "Menes kiltisti katsomaan ja kerro tänne muillekkin",
+                 "-- sano mummo lumihangessa"]
 
 #--------------- CODE BELOW ---------------
 
@@ -183,9 +205,14 @@ def sauna(update, context):
 
     latest_temp, trend, is_stale = result
 
-    reply = f"Saunan lämpötila on {latest_temp:.1f}°C {trend}"
-    if is_stale:
-        reply += ". Viimeisin lämpödata yli tunnin vanha "+str(random.choice(SURKULIST))
+    if random.randint(1,1000) == 7:
+        reply = random.choice(SUPERRARELIST)
+    elif latest_temp < 30.0 and random.randint(1,50) == 3:
+        reply = random.choice(COLDMESSAGES)
+    else:
+        reply = f"Saunan lämpötila on {latest_temp:.1f}°C {trend}"
+        if is_stale:
+            reply += ". Viimeisin lämpödata yli tunnin vanha "+str(random.choice(SURKULIST))
 
     update.message.reply_text(reply)
 
