@@ -47,12 +47,14 @@ SAUNAWARMLIST = ["Saunassa ompi yli 70°C",
                  "+70°C kantsii saunoo nopee",
                  "Eiks +70°C oo ihan fresh",
                  "Kuinka monta koneteekkaria tarvitaan lämmittämään sauna? Ei yhtään, se on jo lämmin",
-                 "Juuri nyt jysähti! Saunassa yli +70°C - katso kuvat"]
+                 "Juuri nyt jysähti! Saunassa yli +70°C - katso kuvat",
+                 "Sauna on lämmin. Mikä sopisikaan sen kanssa paremmin kuin Tupsulan Maatin olunen"]
 
 COLDMESSAGES = ["Ihan vitun kylmä, ei tuolla voi mitään tehdä",
                 "Kylmää kuin huopatossutehtaalla",
                 "Alle enpäs vittu edes tiedä",
-                "Kantsis varmaan laittaa sauna lämpeemään ja kysyä sitten uudestaan, saatana"]
+                "Kantsis varmaan laittaa sauna lämpeemään ja kysyä sitten uudestaan, saatana",
+                "Edes maatista ei saa noin kylmää olutta kuin mitä saunassa nyt onpi"]
 
 SUPERRARELIST = ['Joskus voisin vastata läpällä vain "en tiedä"',
                  "En tiedä, tiedätkö sinä?",
