@@ -220,6 +220,9 @@ def sauna(update, context):
     elif 67 <= latest_temp < 68 and random.randint(1,3) == 2:
         reply = "SIX SEVEN°C"
 
+    elif 69 <= latest_temp < 70 and random.randint(1,2) == 2:
+        reply = "Nice°C"
+
     elif latest_temp < 30.0 and random.randint(1,50) == 3:
         reply = random.choice(COLDMESSAGES)
 
