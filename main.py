@@ -27,12 +27,11 @@ Ohje:
 
 SURKULIST = ["😟", "😟😟😟", "😔", "😔😔", "😢😢", "😭", ":(", ":(((", ":sadge:"]
 
-SAUNAWARMLIST = ["Saunassa ompi yli 70°C",
-                 "Saunassa ompi yli 70°C",
-                 "Saunassa ompi yli 70°C",
-                 "Saunassa on yli 70°C",
-                 "Saunassa on yli 70°C",
-                 "Saunassa yli 70°C, meikä poika: nonniih",
+SAUNAWARMLISTBORING = ["Saunassa ompi yli 70°C", 
+                       "Saunassa on yli 70°C",
+                       "Saunassa yli 70°C"]
+
+SAUNAWARMLIST = ["Saunassa yli 70°C, meikä poika: nonniih",
                  "Yli 70°C lämmintä, kaikki teletapit saunaan",
                  "Yli 70°C, hiki tulee jo pelkästä ajatuksesta",
                  "🔥 70°C ja mä oon ihan 🐒🧠 rn",
@@ -54,12 +53,13 @@ COLDMESSAGES = ["Ihan vitun kylmä, ei tuolla voi mitään tehdä",
                 "Kylmää kuin huopatossutehtaalla",
                 "Alle enpäs vittu edes tiedä",
                 "Kantsis varmaan laittaa sauna lämpeemään ja kysyä sitten uudestaan, saatana",
-                "Edes maatista ei saa noin kylmää olutta kuin mitä saunassa nyt onpi"]
+                "Edes maatista ei saa noin kylmää olutta kuin mitä saunassa nyt onpi",
+                "VESI JÄÄTYY KIULUUN"]
 
 SUPERRARELIST = ['Joskus voisin vastata läpällä vain "en tiedä"',
                  "En tiedä, tiedätkö sinä?",
                  "Lämpömittari on perätilassa. Yritä myöhemmin uudestaan jos uskallat",
-                 "Menes kiltisti katsomaan ja kerro tänne muillekkin",
+                 "Menes kiltisti katsomaan ja kerro tänne muillekkin. Tällä kertaa en kerro",
                  "-- sano mummo lumihangessa"]
 
 #--------------- CODE BELOW ---------------
@@ -187,12 +187,19 @@ def sauna_warm_poller(context):
     already_sent = bool(getattr(context.job, "context", False))
 
     if latest_temp > 70 and not already_sent:
+
+        if random.randint(1,10) == 7:
+            texti=str(random.choice(SAUNAWARMLIST))
+        else:
+            texti=str(random.choice(SAUNAWARMLISTBORING))
+
         context.job.context = True
         context.bot.send_message(
             chat_id=GROUP_ID,
-            text=str(random.choice(SAUNAWARMLIST)),
+            text=texti,
             parse_mode=telegram.ParseMode.HTML
         )
+
     elif latest_temp < 65 and already_sent:
         context.job.context = False
 
@@ -209,8 +216,13 @@ def sauna(update, context):
 
     if random.randint(1,1000) == 7:
         reply = random.choice(SUPERRARELIST)
+
+    elif 67 <= latest_temp < 68 and random.randint(1,3) == 2:
+        reply = "SIX SEVEN°C"
+
     elif latest_temp < 30.0 and random.randint(1,50) == 3:
         reply = random.choice(COLDMESSAGES)
+
     else:
         reply = f"Saunan lämpötila on {latest_temp:.1f}°C {trend}"
         if is_stale:
