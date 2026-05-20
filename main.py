@@ -10,6 +10,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import os
 import csv
 import random
+import time
 
 
 DATA_URL = "https://api.thingspeak.com/channels/1068855/fields/1.csv"
@@ -53,8 +54,10 @@ COLDMESSAGES = ["Ihan vitun kylmä, ei tuolla voi mitään tehdä",
                 "Kylmää kuin huopatossutehtaalla",
                 "Alle enpäs vittu edes tiedä",
                 "Kantsis varmaan laittaa sauna lämpeemään ja kysyä sitten uudestaan, saatana",
-                "Edes maatista ei saa noin kylmää olutta kuin mitä saunassa nyt onpi",
-                "VESI JÄÄTYY KIULUUN"]
+                "Edes maatista ei saa noin kylmää olutta kuin mitä saunassa nyt on",
+                "VESI JÄÄTYY KIULUUN",
+                "Pallit jäätyy lauteisiin",
+                "Laitappa se sauna päälle..."]
 
 SUPERRARELIST = ['Joskus voisin vastata läpällä vain "en tiedä"',
                  "En tiedä, tiedätkö sinä?",
@@ -214,14 +217,23 @@ def sauna(update, context):
 
     latest_temp, trend, is_stale = result
 
-    if random.randint(1,1000) == 7:
+    if random.randint(1,100000) == 67:
+        for i in range(0,random.randint(5,20)):
+            reply = f"Saunan lämpötila on {latest_temp:.1f}°C {trend}"
+            update.message.reply_text(reply)
+            time.sleep(random.randint(1,5))
+
+    elif random.randint(1,1000) == 7:
         reply = random.choice(SUPERRARELIST)
 
-    elif 67 <= latest_temp < 68 and random.randint(1,3) == 2:
+    elif 67 <= latest_temp < 68 and random.randint(1,4) == 2:
         reply = "SIX SEVEN°C"
 
-    elif 69 <= latest_temp < 70 and random.randint(1,2) == 2:
-        reply = "Nice°C"
+    elif 69 <= latest_temp < 70 and random.randint(1,4) == 3:
+        if trend == "nouseva":
+            reply = "Nice°C"
+        else:
+            reply = "Not Nice°C"
 
     elif latest_temp < 30.0 and random.randint(1,50) == 3:
         reply = random.choice(COLDMESSAGES)
